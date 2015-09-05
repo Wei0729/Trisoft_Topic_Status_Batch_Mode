@@ -68,26 +68,54 @@ Public Class mainAPIclass
         baselineDoc.LoadXml(outObjectList)
         'for each object referenced, store the various info in an object and then store them in the hashSet.
         For Each baselineObject As XmlNode In baselineDoc.SelectNodes("/baseline/objects/object")
+            Dim trueReport As Boolean = False
             Dim ishtype As String = baselineObject.Attributes.GetNamedItem("type").Value
             If ishtype = "ISHModule" Or ishtype = "ISHLibrary" Or ishtype = "ISHIllustration" Or ishtype = "ISHMasterDoc" Then
-                Dim reportResult As String = baselineObject.FirstChild.FirstChild.Attributes.GetNamedItem("reportresult").Value
                 Dim refGuid As String = baselineObject.Attributes.GetNamedItem("ref").Value
-                Dim refver As String = baselineObject.Attributes.GetNamedItem("versionnumber").Value
-                Dim refresolution As String = ""
-                If PubType = "Both" Then
-                    If ishtype = "ISHModule" Or ishtype = "ISHLibrary" Or ishtype = "ISHIllustration" Or ishtype = "ISHMasterDoc" Then
-                        TopicGUID.Add(refGuid & "#" & refver & "#" & ishtype & "#" & reportResult)
-                    End If
-                ElseIf PubType = "Image" Then
-                    If ishtype = "ISHIllustration" Or ishtype = "ISHMasterDoc" Then
-                        TopicGUID.Add(refGuid & "#" & refver & "#" & ishtype & "#" & reportResult)
-                    End If
-                ElseIf PubType = "Topic" Then
-                    If ishtype = "ISHModule" Or ishtype = "ISHLibrary" Or ishtype = "ISHMasterDoc" Then
-                        TopicGUID.Add(refGuid & "#" & refver & "#" & ishtype & "#" & reportResult)
+                If ishtype = "ISHIllustration" Then
+                    For Each baselineObject1 As XmlNode In baselineDoc.SelectNodes("/baseline/objects/object/reportitems/reportitem/imagelinks")
+                        Dim i As Integer = 0
+                        For i = 0 To baselineObject1.ChildNodes.Count - 1
+                            Dim imageGUID As String = baselineObject1.ChildNodes(i).Attributes.GetNamedItem("ref").Value
+                            If refGuid = imageGUID Then
+                                trueReport = True
+                                GoTo NextString
+                            End If
+                        Next
+                    Next
+                ElseIf ishtype = "ISHModule" Then
+                    For Each baselineObject2 As XmlNode In baselineDoc.SelectNodes("/baseline/objects/object/reportitems/reportitem/links")
+                        Dim j As Integer = 0
+                        For j = 0 To baselineObject2.ChildNodes.Count - 1
+                            Dim xmlGuid As String = baselineObject2.ChildNodes(j).Attributes.GetNamedItem("ref").Value
+                            If refGuid = xmlGuid Then
+                                trueReport = True
+                                GoTo NextString
+                            End If
+                        Next
+                    Next
+                Else
+                    trueReport = True
+                End If
+NextString:
+                If trueReport = True Then
+                    Dim refver As String = baselineObject.Attributes.GetNamedItem("versionnumber").Value
+                    Dim refSource As String = baselineObject.Attributes.GetNamedItem("source").Value
+                    Dim refresolution As String = ""
+                    If PubType = "Both Image and Topic" Then
+                        If ishtype = "ISHModule" Or ishtype = "ISHLibrary" Or ishtype = "ISHIllustration" Or ishtype = "ISHMasterDoc" Then
+                            TopicGUID.Add(refGuid & "#" & refver & "#" & ishtype & "#" & refSource)
+                        End If
+                    ElseIf PubType = "Image Only" Then
+                        If ishtype = "ISHIllustration" Or ishtype = "ISHMasterDoc" Then
+                            TopicGUID.Add(refGuid & "#" & refver & "#" & ishtype & "#" & refSource)
+                        End If
+                    Else
+                        If ishtype = "ISHModule" Or ishtype = "ISHLibrary" Or ishtype = "ISHMasterDoc" Then
+                            TopicGUID.Add(refGuid & "#" & refver & "#" & ishtype & "#" & refSource)
+                        End If
                     End If
                 End If
-
             End If
         Next
         Return TopicGUID

@@ -17,7 +17,7 @@ Module Topic_Status_Tool
                 Console.WriteLine("You have not provided the csv file in the first argument")
             End If
 
-            Dim usrDir As String = Directory.GetCurrentDirectory
+            Dim usrDir As String = Environment.CurrentDirectory
             Dim toolPropertyFile As String = usrDir & "\tool.properities"
             If Not File.Exists(toolPropertyFile) Then
                 Console.WriteLine("Missing property file in the folder:" & usrDir)
@@ -26,9 +26,11 @@ Module Topic_Status_Tool
             Dim wholeProperty As String = My.Computer.FileSystem.ReadAllText(toolPropertyFile)
             Dim lineDataProperty() As String = Split(wholeProperty, vbNewLine)
 
-            For Each lineTextProperty As String In lineDataProperty
-                f_Properties.Add(lineTextProperty.Split("=")(0), lineTextProperty.Split("=")(1))
-            Next
+            If f_Properties.Count = 0 Then
+                For Each lineTextProperty As String In lineDataProperty
+                    f_Properties.Add(lineTextProperty.Split("=")(0), lineTextProperty.Split("=")(1))
+                Next
+            End If
 
             Dim UserName As String = f_Properties.Item("USERNAME")
             Dim Password As String = f_Properties.Item("PASSWORD")
@@ -89,7 +91,6 @@ Module Topic_Status_Tool
             oBook = oExcel.Workbooks.Add
             'Add data to cells of the first worksheet in the new workbook.
             oSheet = oBook.Worksheets(1)
-            'oSheet = oBook.Worksheets(1)
             oSheet.Cells(1, 1).Value = "Pub GUID"
             oSheet.Cells(1, 2).Value = "Pub Name"
             oSheet.Cells(1, 3).Value = "Pub Version"
